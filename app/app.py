@@ -10,7 +10,6 @@ app = Flask(__name__)
 
 app.vars = {}
 
-
 @app.route('/')
 def main():
     return redirect('/index')
@@ -26,20 +25,28 @@ def graph():
     #    if request.method == 'POST':
     app.vars['ticker'] = request.form['ticker']
 
-    api_url = 'https://www.quandl.com/api/v1/datasets/WIKI/%s.json?api_key=gVz7XbzeecyxHdkCn8yB' % app.vars['ticker']
+#################################################################
+## IMPORTANT: Replace the section in api_url for <YOUR_API_KEY> with your own API Key.
+#################################################################
+    api_url = 'https://www.quandl.com/api/v1/datasets/WIKI/%s.json?api_key=<YOUR_API_KEY>' % app.vars['ticker']
     session = requests.Session()
     session.mount('http://', requests.adapters.HTTPAdapter(max_retries=3))
     raw_data = session.get(api_url)
 
-    a = raw_data.json()
-    df = pandas.DataFrame(a['data'], columns=a['column_names'])
+    # grab the data from API
+    data = raw_data.json()
+
+    # converts data to pandas DataFrame
+    df = pandas.DataFrame(data['data'], columns=data['column_names'])
 
     df['Date'] = pandas.to_datetime(df['Date'])
 
+    # Bokeh Plot Set up
     p = figure(title='Stock prices for %s' % app.vars['ticker'],
                x_axis_label='date',
                x_axis_type='datetime')
 
+    # Bokeh Plot Boxes Ticked
     if request.form.get('Close'):
         p.line(x=df['Date'].values, y=df['Close'].values, line_width=2, legend='Close')
     if request.form.get('Adj. Close'):
